@@ -1,0 +1,47 @@
+{
+  "name": "game-license-manager",
+  "version": "1.0.0",
+  "description": "游戏版号管理系统 - 爬取和管理国家新闻出版署游戏版号审批信息",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "chcp 65001 && npm run dev:original",
+    "dev:original": "vite",
+    "dev:win": "set ELECTRON_DISABLE_GPU=1 && vite",
+    "build": "vue-tsc --noEmit && vite build && electron-builder",
+    "build:renderer": "vite build",
+    "build:main": "tsc -p tsconfig.electron.json",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0",
+    "pinia": "^2.1.7",
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "sql.js": "^1.10.3",
+    "element-plus": "^2.7.0",
+    "@element-plus/icons-vue": "^2.1.0",
+    "echarts": "^5.5.0",
+    "vxe-table": "^4.8.9",
+    "vxe-pc-ui": "^4.3.35",
+    "xe-utils": "^3.5.23"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "typescript": "~5.4.0",
+    "vite": "^5.2.8",
+    "vue-tsc": "^2.0.7",
+    "electron": "^29.1.6",
+    "electron-builder": "^24.13.3",
+    "vite-plugin-electron": "^0.28.6",
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "@types/node": "^20.11.30",
+    "sass": "^1.72.0",
+    "unplugin-vue-components": "^0.26.0",
+    "unplugin-auto-import": "^0.17.5"
+  },
+  "author": "",
+  "license": "MIT"
+}
