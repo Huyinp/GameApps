@@ -56,13 +56,12 @@
           </div>
         </template>
         <el-table :data="domesticData" border stripe :row-class-name="getMajorCompanyRowClass" v-loading="domesticLoading">
-          <el-table-column prop="approval_number" label="批复文号" width="180" show-overflow-tooltip />
-          <el-table-column prop="license_number" label="版号(ISBN)" width="150" show-overflow-tooltip />
-          <el-table-column prop="game_name" label="游戏名称" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="category" label="申报类别" width="100" />
-          <el-table-column prop="publish_unit_name" label="出版单位" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="operate_unit_name" label="运营单位" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="approval_date" label="审批日期" width="100" />
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column prop="game_name" label="游戏名称" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="license_number" label="版号" width="140" show-overflow-tooltip />
+          <el-table-column prop="category" label="类别" width="80" />
+          <el-table-column prop="publish_unit_name" label="出版单位" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="operate_unit_name" label="运营单位" min-width="150" show-overflow-tooltip />
         </el-table>
       </el-card>
 
@@ -75,13 +74,12 @@
           </div>
         </template>
         <el-table :data="importedData" border stripe :row-class-name="getMajorCompanyRowClass" v-loading="importedLoading">
-          <el-table-column prop="approval_number" label="批复文号" width="180" show-overflow-tooltip />
-          <el-table-column prop="license_number" label="版号(ISBN)" width="150" show-overflow-tooltip />
-          <el-table-column prop="game_name" label="游戏名称" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="category" label="申报类别" width="100" />
-          <el-table-column prop="publish_unit_name" label="出版单位" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="operate_unit_name" label="运营单位" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="approval_date" label="审批日期" width="100" />
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column prop="game_name" label="游戏名称" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="license_number" label="版号" width="140" show-overflow-tooltip />
+          <el-table-column prop="category" label="类别" width="80" />
+          <el-table-column prop="publish_unit_name" label="出版单位" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="operate_unit_name" label="运营单位" min-width="150" show-overflow-tooltip />
         </el-table>
       </el-card>
     </div>
