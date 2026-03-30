@@ -19,7 +19,9 @@ const api = {
     // 删除数据
     delete: (table: string, id: number) => ipcRenderer.invoke('db:delete', table, id),
     // 获取数据库路径
-    getPath: () => ipcRenderer.invoke('db:getPath')
+    getPath: () => ipcRenderer.invoke('db:getPath'),
+    // 导出大厂关联数据备份
+    exportMajorCompanyBackup: () => ipcRenderer.invoke('db:exportMajorCompanyBackup')
   },
   // 爬虫操作
   spider: {

@@ -21,6 +21,10 @@
               <el-icon><Plus /></el-icon>
               新增
             </el-button>
+            <el-button type="warning" @click="handleExportBackup" :loading="exportLoading">
+              <el-icon><Download /></el-icon>
+              导出备份
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -162,6 +166,7 @@ const unitSearch = ref('')
 // 表格数据
 const tableData = ref<any[]>([])
 const loading = ref(false)
+const exportLoading = ref(false)
 
 // 所有单位
 const allUnits = ref<any[]>([])
@@ -286,6 +291,31 @@ const handleAdd = () => {
     is_major: 0
   }
   dialogVisible.value = true
+}
+
+// 导出大厂关联数据备份
+const handleExportBackup = async () => {
+  exportLoading.value = true
+  try {
+    const result = await window.electronAPI.database.exportMajorCompanyBackup()
+    if (result.success && result.data) {
+      const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' })
+      const link = document.createElement('a')
+      const timestamp = new Date().toISOString().slice(0, 10)
+      link.download = `大厂关联数据备份_${timestamp}.json`
+      link.href = URL.createObjectURL(blob)
+      link.click()
+      URL.revokeObjectURL(link.href)
+      ElMessage.success('导出成功')
+    } else {
+      ElMessage.error('导出失败: ' + (result.error || '未知错误'))
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 // 编辑

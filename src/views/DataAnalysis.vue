@@ -94,7 +94,7 @@
 
       <!-- 单年份分析内容 -->
       <div v-show="activeTab === 'single'" ref="singleCaptureRef">
-        <div class="capture-title">{{ selectedYear }}年数据分析</div>
+        <div class="capture-title">{{ selectedYear }}年版号数据分析</div>
         <!-- 统计概览 -->
         <el-row :gutter="20" class="stat-row">
           <el-col :span="6">
@@ -159,7 +159,7 @@
                   <span>热门出版单位 TOP10</span>
                 </div>
               </template>
-              <el-table :data="topPublishers" style="width: 100%" max-height="300" @row-click="handleRowClick">
+              <el-table :data="topPublishers" style="width: 100%" @row-click="handleRowClick">
                 <el-table-column prop="name" label="单位名称" />
                 <el-table-column prop="count" label="版号数量" width="100" />
               </el-table>
@@ -174,7 +174,7 @@
                   <span>热门运营单位 TOP10</span>
                 </div>
               </template>
-              <el-table :data="topOperators" style="width: 100%" max-height="300" @row-click="handleRowClick">
+              <el-table :data="topOperators" style="width: 100%" @row-click="handleRowClick">
                 <el-table-column prop="name" label="单位名称" />
                 <el-table-column prop="count" label="版号数量" width="100" />
               </el-table>
@@ -267,7 +267,7 @@
                   <span>大厂版号排行 TOP10</span>
                 </div>
               </template>
-              <el-table :data="majorCompanyRanking" border stripe max-height="300">
+              <el-table :data="majorCompanyRanking" border stripe>
                 <el-table-column type="index" label="排名" width="60" align="center" />
                 <el-table-column prop="company_name" label="厂商名称" min-width="150" />
                 <el-table-column prop="license_count" label="版号数量" width="100" align="center" />
@@ -964,7 +964,7 @@ const handleRowClick = async (row: any) => {
 // 生成长图 - 单年份分析
 const handleExportSingle = async () => {
   if (!singleCaptureRef.value) return
-  await exportToImage(singleCaptureRef.value, `${selectedYear.value}年数据分析`)
+  await exportToImage(singleCaptureRef.value, `${selectedYear.value}年版号数据分析`)
 }
 
 // 生成长图 - 多年份比较

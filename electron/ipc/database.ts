@@ -318,6 +318,52 @@ export function registerDatabaseIpc() {
     return getDbPath()
   })
 
+  // 导出大厂关联数据备份
+  ipcMain.handle('db:exportMajorCompanyBackup', async () => {
+    try {
+      if (!db) await initDatabase()
+      
+      // 获取所有大厂
+      const companies = db.exec(`SELECT * FROM company WHERE is_major = 1`)
+      const companyColumns = companies[0]?.columns || []
+      const companyData = (companies[0]?.values || []).map((row: any[]) => {
+        const obj: any = {}
+        companyColumns.forEach((col: string, idx: number) => {
+          obj[col] = row[idx]
+        })
+        return obj
+      })
+
+      // 获取所有大厂关联的单位
+      const relations = db.exec(`
+        SELECT curb.*, c.full_name as company_name, c.short_name as company_short_name, u.name as unit_name
+        FROM company_unit_relation curb
+        INNER JOIN company c ON curb.company_id = c.id
+        INNER JOIN unit u ON curb.unit_id = u.id
+        WHERE c.is_major = 1
+      `)
+      const relationColumns = relations[0]?.columns || []
+      const relationData = (relations[0]?.values || []).map((row: any[]) => {
+        const obj: any = {}
+        relationColumns.forEach((col: string, idx: number) => {
+          obj[col] = row[idx]
+        })
+        return obj
+      })
+
+      const backupData = {
+        exportTime: new Date().toISOString(),
+        companies: companyData,
+        relations: relationData
+      }
+
+      return { success: true, data: backupData }
+    } catch (error: any) {
+      console.error('[Database] 导出失败:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
   console.log('[Database] IPC 处理器注册完成')
 }
 
