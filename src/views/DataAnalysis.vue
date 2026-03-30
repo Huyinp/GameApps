@@ -15,6 +15,12 @@
                   />
                 </el-select>
               </el-form-item>
+              <el-form-item>
+                <el-button type="success" @click="handleExportSingle" :loading="exportLoading">
+                  <el-icon><Picture /></el-icon>
+                  生成长图
+                </el-button>
+              </el-form-item>
             </el-form>
           </el-tab-pane>
           
@@ -45,6 +51,41 @@
                   <el-radio label="进口">进口</el-radio>
                 </el-radio-group>
               </el-form-item>
+              <el-form-item>
+                <el-button type="success" @click="handleExportCompare" :loading="exportLoading">
+                  <el-icon><Picture /></el-icon>
+                  生成长图
+                </el-button>
+              </el-form-item>
+            </el-form>
+          </el-tab-pane>
+
+          <el-tab-pane label="大厂分析" name="major">
+            <el-form :inline="true">
+              <el-form-item label="选择年份">
+                <el-select 
+                  v-model="majorYears" 
+                  multiple 
+                  placeholder="请选择年份（多选）" 
+                  @change="handleMajorChange"
+                  style="width: 300px;"
+                  collapse-tags
+                  collapse-tags-tooltip
+                >
+                  <el-option
+                    v-for="y in availableYears"
+                    :key="y"
+                    :label="`${y}年`"
+                    :value="y"
+                  />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="success" @click="handleExportMajor" :loading="exportLoading">
+                  <el-icon><Picture /></el-icon>
+                  生成长图
+                </el-button>
+              </el-form-item>
             </el-form>
           </el-tab-pane>
 
@@ -52,7 +93,8 @@
       </el-card>
 
       <!-- 单年份分析内容 -->
-      <div v-show="activeTab === 'single'">
+      <div v-show="activeTab === 'single'" ref="singleCaptureRef">
+        <div class="capture-title">{{ selectedYear }}年数据分析</div>
         <!-- 统计概览 -->
         <el-row :gutter="20" class="stat-row">
           <el-col :span="6">
@@ -142,7 +184,8 @@
       </div>
 
       <!-- 多年份比较内容 -->
-      <div v-show="activeTab === 'compare'">
+      <div v-show="activeTab === 'compare'" ref="compareCaptureRef">
+        <div class="capture-title">{{ selectedYears.join('、') }}年度版号对比分析</div>
         <el-row :gutter="20">
           <!-- 国产游戏比较 -->
           <el-col :span="12">
@@ -184,6 +227,66 @@
         </el-row>
       </div>
 
+      <!-- 大厂分析内容 -->
+      <div v-show="activeTab === 'major'" ref="majorCaptureRef">
+        <div class="capture-title">{{ majorYears.join('、') }}年度大厂版号分析</div>
+        <el-row :gutter="20">
+          <!-- 大厂月度审批对比 -->
+          <el-col :span="24">
+            <el-card>
+              <template #header>
+                <div class="card-header">
+                  <span>大厂版号月度审批对比</span>
+                </div>
+              </template>
+              <div ref="majorCompareChartRef" style="height: 400px;"></div>
+            </el-card>
+          </el-col>
+        </el-row>
+        
+        <!-- 大厂年度总量对比 -->
+        <el-row :gutter="20" style="margin-top: 20px;">
+          <el-col :span="24">
+            <el-card>
+              <template #header>
+                <div class="card-header">
+                  <span>大厂年度版号总量对比</span>
+                </div>
+              </template>
+              <div ref="majorTotalChartRef" style="height: 300px;"></div>
+            </el-card>
+          </el-col>
+        </el-row>
+
+        <!-- 大厂详情列表 -->
+        <el-row :gutter="20" style="margin-top: 20px;">
+          <el-col :span="12">
+            <el-card>
+              <template #header>
+                <div class="card-header">
+                  <span>大厂版号排行 TOP10</span>
+                </div>
+              </template>
+              <el-table :data="majorCompanyRanking" border stripe max-height="300">
+                <el-table-column type="index" label="排名" width="60" align="center" />
+                <el-table-column prop="company_name" label="厂商名称" min-width="150" />
+                <el-table-column prop="license_count" label="版号数量" width="100" align="center" />
+              </el-table>
+            </el-card>
+          </el-col>
+          <el-col :span="12">
+            <el-card>
+              <template #header>
+                <div class="card-header">
+                  <span>大厂版号占比统计</span>
+                </div>
+              </template>
+              <div ref="majorRatioChartRef" style="height: 300px;"></div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
+
       <!-- 详情对话框 -->
       <el-dialog v-model="detailDialogVisible" title="版号详情" width="85%">
         <el-table :data="detailData" border stripe max-height="400">
@@ -203,6 +306,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import html2canvas from 'html2canvas'
 import { ElMessage } from 'element-plus'
 
 // 当前年份
@@ -215,6 +319,10 @@ const activeTab = ref('single')
 // 多年份比较
 const selectedYears = ref<number[]>([])
 const compareGameType = ref('all')
+
+// 大厂分析
+const majorYears = ref<number[]>([])
+const majorCompanyRanking = ref<any[]>([])
 
 // 可选年份
 const availableYears = computed(() => {
@@ -237,10 +345,21 @@ const stats = ref({
 const monthChartRef = ref<HTMLElement>()
 const typeChartRef = ref<HTMLElement>()
 
+// 截图引用
+const singleCaptureRef = ref<HTMLElement>()
+const compareCaptureRef = ref<HTMLElement>()
+const majorCaptureRef = ref<HTMLElement>()
+const exportLoading = ref(false)
+
 // 多年份比较图表引用
 const compareDomesticChartRef = ref<HTMLElement>()
 const compareImportedChartRef = ref<HTMLElement>()
 const compareTotalChartRef = ref<HTMLElement>()
+
+// 大厂分析图表引用
+const majorCompareChartRef = ref<HTMLElement>()
+const majorTotalChartRef = ref<HTMLElement>()
+const majorRatioChartRef = ref<HTMLElement>()
 
 // 热门单位
 const topPublishers = ref<any[]>([])
@@ -419,12 +538,246 @@ const handleTabChange = async (tab: string) => {
       selectedYears.value = [currentYear, currentYear - 1]
     }
     await loadCompareCharts()
+  } else if (tab === 'major') {
+    await nextTick()
+    // 默认选择近两年
+    if (majorYears.value.length === 0) {
+      majorYears.value = [currentYear, currentYear - 1]
+    }
+    await loadMajorCharts()
   }
 }
 
 // 多年份比较变化
 const handleCompareChange = async () => {
   await loadCompareCharts()
+}
+
+// 大厂分析变化
+const handleMajorChange = async () => {
+  await loadMajorCharts()
+}
+
+// 加载大厂分析图表
+const loadMajorCharts = async () => {
+  if (majorYears.value.length === 0) return
+
+  await nextTick()
+  
+  // 加载大厂月度对比
+  if (majorCompareChartRef.value) {
+    await loadMajorCompareChart()
+  }
+  
+  // 加载大厂年度总量
+  if (majorTotalChartRef.value) {
+    await loadMajorTotalChart()
+  }
+  
+  // 加载大厂占比
+  if (majorRatioChartRef.value) {
+    await loadMajorRatioChart()
+  }
+  
+  // 加载大厂排行
+  await loadMajorRanking()
+}
+
+// 大厂月度审批对比
+const loadMajorCompareChart = async () => {
+  if (!majorCompareChartRef.value) return
+
+  const chart = echarts.init(majorCompareChartRef.value)
+  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+  const series: any[] = []
+  const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4']
+  
+  for (let i = 0; i < majorYears.value.length; i++) {
+    const year = majorYears.value[i]
+    const data: number[] = []
+    
+    for (let month = 1; month <= 12; month++) {
+      const monthStr = month.toString().padStart(2, '0')
+      const result = await window.electronAPI.database.query(`
+        SELECT COUNT(*) as count FROM game_license gl
+        INNER JOIN company_unit_relation curb ON gl.publish_unit_id = curb.unit_id
+        INNER JOIN company c ON curb.company_id = c.id
+        WHERE c.is_major = 1 AND gl.approval_date LIKE '${year}-${monthStr}%'
+      `)
+      data.push(result.data?.[0]?.count || 0)
+    }
+    
+    series.push({
+      name: `${year}年`,
+      type: 'line',
+      data: data,
+      smooth: true,
+      itemStyle: { color: colors[i % colors.length] }
+    })
+  }
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      data: majorYears.value.map(y => `${y}年`)
+    },
+    xAxis: {
+      type: 'category',
+      data: months
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series
+  })
+}
+
+// 大厂年度总量对比
+const loadMajorTotalChart = async () => {
+  if (!majorTotalChartRef.value) return
+
+  const chart = echarts.init(majorTotalChartRef.value)
+  const years = majorYears.value.map(y => `${y}年`)
+  const majorData: number[] = []
+  const totalData: number[] = []
+  
+  for (const year of majorYears.value) {
+    // 大厂版号数
+    let result = await window.electronAPI.database.query(`
+      SELECT COUNT(*) as count FROM game_license gl
+      INNER JOIN company_unit_relation curb ON gl.publish_unit_id = curb.unit_id
+      INNER JOIN company c ON curb.company_id = c.id
+      WHERE c.is_major = 1 AND gl.approval_date LIKE '${year}%'
+    `)
+    const major = result.data?.[0]?.count || 0
+    majorData.push(major)
+    
+    // 总版号数
+    result = await window.electronAPI.database.query(
+      `SELECT COUNT(*) as count FROM game_license WHERE approval_date LIKE '${year}%'`
+    )
+    const total = result.data?.[0]?.count || 0
+    totalData.push(total)
+  }
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      data: ['大厂版号', '总版号']
+    },
+    xAxis: {
+      type: 'category',
+      data: years
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '大厂版号',
+        type: 'bar',
+        data: majorData,
+        itemStyle: { color: '#ee6666' }
+      },
+      {
+        name: '总版号',
+        type: 'bar',
+        data: totalData,
+        itemStyle: { color: '#91cc75' }
+      }
+    ]
+  })
+}
+
+// 大厂版号占比
+const loadMajorRatioChart = async () => {
+  if (!majorRatioChartRef.value) return
+
+  const chart = echarts.init(majorRatioChartRef.value)
+  const years = majorYears.value.map(y => `${y}年`)
+  const majorData: number[] = []
+  const otherData: number[] = []
+  
+  for (const year of majorYears.value) {
+    // 大厂版号数
+    let result = await window.electronAPI.database.query(`
+      SELECT COUNT(*) as count FROM game_license gl
+      INNER JOIN company_unit_relation curb ON gl.publish_unit_id = curb.unit_id
+      INNER JOIN company c ON curb.company_id = c.id
+      WHERE c.is_major = 1 AND gl.approval_date LIKE '${year}%'
+    `)
+    const major = result.data?.[0]?.count || 0
+    majorData.push(major)
+    
+    // 非大厂版号数
+    result = await window.electronAPI.database.query(`
+      SELECT COUNT(*) as count FROM game_license gl
+      WHERE gl.approval_date LIKE '${year}%'
+      AND NOT EXISTS (
+        SELECT 1 FROM company_unit_relation curb
+        INNER JOIN company c ON curb.company_id = c.id
+        WHERE curb.unit_id = gl.publish_unit_id AND c.is_major = 1
+      )
+    `)
+    const other = result.data?.[0]?.count || 0
+    otherData.push(other)
+  }
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      data: ['大厂版号', '其他版号']
+    },
+    xAxis: {
+      type: 'category',
+      data: years
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '大厂版号',
+        type: 'bar',
+        stack: 'total',
+        data: majorData,
+        itemStyle: { color: '#ee6666' }
+      },
+      {
+        name: '其他版号',
+        type: 'bar',
+        stack: 'total',
+        data: otherData,
+        itemStyle: { color: '#91cc75' }
+      }
+    ]
+  })
+}
+
+// 大厂排行
+const loadMajorRanking = async () => {
+  if (majorYears.value.length === 0) return
+  
+  const yearList = majorYears.value.join("','")
+  
+  const result = await window.electronAPI.database.query(`
+    SELECT c.full_name as company_name, COUNT(*) as license_count
+    FROM game_license gl
+    INNER JOIN company_unit_relation curb ON gl.publish_unit_id = curb.unit_id
+    INNER JOIN company c ON curb.company_id = c.id
+    WHERE c.is_major = 1 AND SUBSTR(gl.approval_date, 1, 4) IN ('${yearList}')
+    GROUP BY c.id, c.full_name
+    ORDER BY license_count DESC
+    LIMIT 10
+  `)
+  
+  majorCompanyRanking.value = result.data || []
 }
 
 // 加载多年份比较图表
@@ -608,6 +961,69 @@ const handleRowClick = async (row: any) => {
   }
 }
 
+// 生成长图 - 单年份分析
+const handleExportSingle = async () => {
+  if (!singleCaptureRef.value) return
+  await exportToImage(singleCaptureRef.value, `${selectedYear.value}年数据分析`)
+}
+
+// 生成长图 - 多年份比较
+const handleExportCompare = async () => {
+  if (selectedYears.value.length === 0) {
+    ElMessage.warning('请先选择年份')
+    return
+  }
+  // 临时切换到该标签页确保可见
+  const originalTab = activeTab.value
+  activeTab.value = 'compare'
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 300))
+  if (compareCaptureRef.value) {
+    await exportToImage(compareCaptureRef.value, `${selectedYears.value.join('、')}年度版号对比分析`)
+  }
+  activeTab.value = originalTab
+}
+
+// 生长大厂分析
+const handleExportMajor = async () => {
+  if (majorYears.value.length === 0) {
+    ElMessage.warning('请先选择年份')
+    return
+  }
+  // 临时切换到该标签页确保可见
+  const originalTab = activeTab.value
+  activeTab.value = 'major'
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 300))
+  if (majorCaptureRef.value) {
+    await exportToImage(majorCaptureRef.value, `${majorYears.value.join('、')}年度大厂版号分析`)
+  }
+  activeTab.value = originalTab
+}
+
+// 通用导出函数
+const exportToImage = async (element: HTMLElement, title: string) => {
+  exportLoading.value = true
+  try {
+    const canvas = await html2canvas(element, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: '#ffffff',
+      logging: false
+    })
+    const link = document.createElement('a')
+    link.download = `${title}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+    ElMessage.success('长图生成成功')
+  } catch (error) {
+    console.error('生成图片失败:', error)
+    ElMessage.error('生成图片失败')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 onMounted(async () => {
   await handleYearChange()
 })
@@ -644,6 +1060,14 @@ onMounted(async () => {
   
   .card-header {
     font-weight: 500;
+  }
+  
+  .capture-title {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px 0 20px;
+    color: #303133;
   }
 }
 </style>
