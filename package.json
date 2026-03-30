@@ -26,7 +26,8 @@
     "echarts": "^5.5.0",
     "vxe-table": "^4.8.9",
     "vxe-pc-ui": "^4.3.35",
-    "xe-utils": "^3.5.23"
+    "xe-utils": "^3.5.23",
+    "html2canvas": "^1.4.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
