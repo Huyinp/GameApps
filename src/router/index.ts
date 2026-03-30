@@ -38,6 +38,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '数据分析' }
       },
       {
+        path: '/monthly',
+        name: 'MonthlyLicense',
+        component: () => import('@/views/MonthlyLicense.vue'),
+        meta: { title: '月度版号' }
+      },
+      {
         path: '/collection',
         name: 'DataCollection',
         component: () => import('@/views/DataCollection.vue'),

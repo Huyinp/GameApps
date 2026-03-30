@@ -31,6 +31,10 @@
           <el-icon><PieChart /></el-icon>
           <span>数据分析</span>
         </el-menu-item>
+        <el-menu-item index="/monthly">
+          <el-icon><Calendar /></el-icon>
+          <span>月度版号</span>
+        </el-menu-item>
         <el-menu-item index="/collection">
           <el-icon><Upload /></el-icon>
           <span>数据采集</span>

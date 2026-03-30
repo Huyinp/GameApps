@@ -47,6 +47,7 @@
               </el-form-item>
             </el-form>
           </el-tab-pane>
+
         </el-tabs>
       </el-card>
 
@@ -577,6 +578,12 @@ const loadTotalCompareChart = async () => {
       }
     ]
   })
+}
+
+// 月份选择变化
+const handleMonthChange = async () => {
+  if (!selectedMonth.value) return
+  await loadMonthlyData()
 }
 
 // 查看详情
