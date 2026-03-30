@@ -57,6 +57,8 @@ async function initDatabase(): Promise<any> {
     console.log('[Database] 加载已有数据库')
     const fileBuffer = readFileSync(dbPath)
     db = new SQL.Database(fileBuffer)
+    // 执行迁移
+    migrateDatabase()
   } else {
     console.log('[Database] 创建新数据库')
     db = new SQL.Database()
@@ -124,6 +126,53 @@ function createTables() {
 
   saveDatabase()
   console.log('[Database] 表创建完成')
+}
+
+// 数据库迁移 - 添加缺失的列
+function migrateDatabase() {
+  if (!db) return
+  
+  try {
+    // 检查 game_license 表是否有 updated_at 列
+    const result = db.exec("PRAGMA table_info(game_license)")
+    const columns = result[0]?.values?.map((row: any) => row[1]) || []
+    
+    if (!columns.includes('updated_at')) {
+      db.run('ALTER TABLE game_license ADD COLUMN updated_at DATETIME')
+      console.log('[Database] 迁移: 已添加 updated_at 列')
+    }
+    
+    // 检查 unit 表是否有 updated_at 列
+    const unitResult = db.exec("PRAGMA table_info(unit)")
+    const unitColumns = unitResult[0]?.values?.map((row: any) => row[1]) || []
+    
+    if (!unitColumns.includes('updated_at')) {
+      db.run('ALTER TABLE unit ADD COLUMN updated_at DATETIME')
+      console.log('[Database] 迁移: 已添加 unit.updated_at 列')
+    }
+    
+    // 检查 company 表是否有 updated_at 列
+    const companyResult = db.exec("PRAGMA table_info(company)")
+    const companyColumns = companyResult[0]?.values?.map((row: any) => row[1]) || []
+    
+    if (!companyColumns.includes('updated_at')) {
+      db.run('ALTER TABLE company ADD COLUMN updated_at DATETIME')
+      console.log('[Database] 迁移: 已添加 company.updated_at 列')
+    }
+    
+    // 检查 company_unit_relation 表是否有 updated_at 列
+    const relationResult = db.exec("PRAGMA table_info(company_unit_relation)")
+    const relationColumns = relationResult[0]?.values?.map((row: any) => row[1]) || []
+    
+    if (!relationColumns.includes('updated_at')) {
+      db.run('ALTER TABLE company_unit_relation ADD COLUMN updated_at DATETIME')
+      console.log('[Database] 迁移: 已添加 company_unit_relation.updated_at 列')
+    }
+    
+    saveDatabase()
+  } catch (error) {
+    console.error('[Database] 迁移失败:', error)
+  }
 }
 
 // 保存数据库到文件
